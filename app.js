@@ -321,22 +321,23 @@ function receivedMessage(event) {
 }
 
 function handleReceivedMessage(senderID, messageText) {
-  var response = eh.getMessageResponse(messageText);
-  if (!response) {
-    return sendTextMessage(senderID, messageText + "!"); 
-  }
-  console.log("EH Response: ", response);
-  switch (response.type) {
-    case 'TEXT': 
-      sendTextMessage(senderID, response.payload); 
-      break;
-    case 'EVENTS_LIST':
-      sendEventsListMessage(senderID, response.payload);
-      break;
-    default:
-      sendTextMessage(senderID, "Sorry I don't know what's going on!"); 
-      break;   
-  }
+  eh.getMessageResponse(messageText, function(response) {
+    if (!response) {
+      return sendTextMessage(senderID, messageText + "!"); 
+    }
+    console.log("EH Response: ", response);
+    switch (response.type) {
+      case 'TEXT': 
+        sendTextMessage(senderID, response.payload); 
+        break;
+      case 'EVENTS_LIST':
+        sendEventsListMessage(senderID, response.payload);
+        break;
+      default:
+        sendTextMessage(senderID, "Sorry I don't know what's going on!"); 
+        break;   
+    }
+  });
 }
 
 function sendEventsListMessage(recipientId, events_list) {

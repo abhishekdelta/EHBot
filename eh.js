@@ -1,6 +1,6 @@
 var request = require('request');
 
-exports.getMessageResponse = function(messageText) {
+exports.getMessageResponse = function(messageText, callback) {
 	console.log("Hello!");
 	messageText = cleanMessage(messageText);
 	switch (messageText) {
@@ -13,10 +13,10 @@ exports.getMessageResponse = function(messageText) {
 		case "things to do around me":
 		case "event suggestions":
 		case "whats happening around me":
-			return getNearbyEvents();
+			sendNearbyEvents(callback);
 			break;
 		default:
-			return textMessage("Sorry I didn't understand you. Why don't you try 'events around me'.");
+			sendText("Sorry I didn't understand you. Why don't you try 'events around me'.", callback);
 	}
 }
 
@@ -26,7 +26,7 @@ function cleanMessage(messageText) {
 	return messageText;
 }
 
-function getNearbyEvents() {
+function sendNearbyEvents(callback) {
 	request('https://api.eventshigh.com/api/events/bangalore/today', function (error, response, body) {
 	  if (!error && response.statusCode == 200) {
 	  	res = JSON.parse(body);
@@ -36,17 +36,17 @@ function getNearbyEvents() {
 		}
 	  	console.log("Upcoming events: " + res["upcoming_events"].length);
 	  	upcoming_events = res['upcoming_events'].splice(10);
-	  	return {
+	  	callback({
 	  		type: "EVENTS_LIST",
 	  		payload: upcoming_events
-	  	};
+	  	});
 	  }
 	});
 }
 
-function textMessage(text) {
-	return {
+function sendText(text) {
+	callback({
 		type: "TEXT",
 		payload: text
-	}
+	});
 }
