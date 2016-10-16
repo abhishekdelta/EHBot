@@ -325,6 +325,7 @@ function handleReceivedMessage(senderID, messageText) {
   if (!response) {
     return sendTextMessage(senderID, messageText + "!"); 
   }
+  console.log("EH Response: ", response);
   switch (response.type) {
     case 'TEXT': 
       sendTextMessage(senderID, response.payload); 

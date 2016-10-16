@@ -1,6 +1,7 @@
 var request = require('request');
 
 exports.getMessageResponse = function(messageText) {
+	console.log("Hello!");
 	messageText = cleanMessage(messageText);
 	switch (messageText) {
 		case "events":
