@@ -322,11 +322,59 @@ function receivedMessage(event) {
 
 function handleReceivedMessage(senderID, messageText) {
   var response = eh.getMessageResponse(messageText);
-  if (response && response.type == 'TEXT') {
-    sendTextMessage(senderID, response.payload);
-  } else {
-    return sendTextMessage(senderID, messageText + "!");
+  if (!response) {
+    return sendTextMessage(senderID, messageText + "!"); 
   }
+  switch (response.type) {
+    case 'TEXT': 
+      sendTextMessage(senderID, response.payload); 
+      break;
+    case 'EVENTS_LIST':
+      sendEventsListMessage(senderID, response.payload);
+      break;
+    default:
+      sendTextMessage(senderID, "Sorry I don't know what's going on!"); 
+      break;   
+  }
+}
+
+function sendEventsListMessage(recipientId, events_list) {
+  var events = [];
+  for (var i=0; events_list.length; i++) {
+    var e = events_list[i];
+    events.push({
+      title: e.title,
+      subtitle: e.description,
+      item_url: e.source_url,    
+      image_url: e.img_url,
+      buttons: [{
+        type: "web_url",
+        url: e.source_url,
+        title: "More Info"
+      }, {
+        type: "postback",
+        title: "Book Tickets",
+        payload: "Book ticket",
+      }],
+    });
+  }
+
+  var messageData = {
+    recipient: {
+      id: recipientId
+    },
+    message: {
+      attachment: {
+        type: "template",
+        payload: {
+          template_type: "generic",
+          elements: events
+        }
+      }
+    }
+  };  
+
+  callSendAPI(messageData);
 }
 
 /*
