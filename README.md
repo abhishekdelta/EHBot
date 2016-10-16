@@ -1,1 +1,1 @@
-# EHBot
+# EHBot v0.1
