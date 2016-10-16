@@ -24,6 +24,8 @@ app.set('view engine', 'ejs');
 app.use(bodyParser.json({ verify: verifyRequestSignature }));
 app.use(express.static('public'));
 
+var eh = require('./eh.js');
+
 /*
  * Be sure to setup your config values before running this code. You can 
  * set them using environment variables or modifying the config file in /config.
@@ -319,7 +321,7 @@ function receivedMessage(event) {
 }
 
 function handleReceivedMessage(senderID, messageText) {
-  response = getMessageResponse(messageText);
+  response = eh.getMessageResponse(messageText);
   if (response.type == 'TEXT') {
     sendTextMessage(senderID, response.payload);
   } else {
