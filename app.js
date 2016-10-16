@@ -321,8 +321,8 @@ function receivedMessage(event) {
 }
 
 function handleReceivedMessage(senderID, messageText) {
-  response = eh.getMessageResponse(messageText);
-  if (response.type == 'TEXT') {
+  var response = eh.getMessageResponse(messageText);
+  if (response && response.type == 'TEXT') {
     sendTextMessage(senderID, response.payload);
   } else {
     return sendTextMessage(senderID, messageText + "!");

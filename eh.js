@@ -1,7 +1,7 @@
 var request = require('request');
 
 exports.getMessageResponse = function(messageText) {
-	messageText = cleanMessage();
+	messageText = cleanMessage(messageText);
 	switch (messageText) {
 		case "events":
 		case "events around me":
@@ -12,7 +12,7 @@ exports.getMessageResponse = function(messageText) {
 		case "things to do around me":
 		case "event suggestions":
 		case "whats happening around me":
-			return getNearbyEvents(senderID);
+			return getNearbyEvents();
 			break;
 		default:
 			return textMessage("Sorry I didn't understand you. Why don't you try 'events around me'.");
@@ -29,10 +29,14 @@ function getNearbyEvents() {
 	request('https://api.eventshigh.com/api/events/bangalore/today', function (error, response, body) {
 	  if (!error && response.statusCode == 200) {
 	  	res = JSON.parse(body);
-	  	console.log(len(res['upcoming_events']));
+		if (!res) {
+			console.log("Got empty response from EH API");
+			return textMessage("Something went wrong, sorry!");
+		}
+	  	console.log("Upcoming events: " + res["upcoming_events"].length);
 	  	upcoming_events = res['upcoming_events'].splice(10);
 	  	return {
-	  		type: "EVENTS",
+	  		type: "EVENTS_LIST",
 	  		payload: upcoming_events
 	  	};
 	  }
