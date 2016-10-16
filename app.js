@@ -250,7 +250,8 @@ function receivedMessage(event) {
   }
 
   if (messageText) {
-
+    handleReceivedMessage(senderID, messageText);
+    /*
     // If we receive a text message, check to see if it matches any special
     // keywords and send back the corresponding example. Otherwise, just echo
     // the text we received.
@@ -309,12 +310,22 @@ function receivedMessage(event) {
 
       default:
         sendTextMessage(senderID, messageText);
-    }
+    } */
   } else if (messageAttachments) {
     sendTextMessage(senderID, "Message with attachment received");
+    console.log(messageAttachments[0].payload.coordinates.lat); //gives you lat
+    console.log(messageAttachments[0].payload.coordinates.long); // gives you long
   }
 }
 
+function handleReceivedMessage(senderID, messageText) {
+  response = getMessageResponse(messageText);
+  if (response.type == 'TEXT') {
+    sendTextMessage(senderID, response.payload);
+  } else {
+    return sendTextMessage(senderID, messageText + "!");
+  }
+}
 
 /*
  * Delivery Confirmation Event
