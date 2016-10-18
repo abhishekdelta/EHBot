@@ -1,8 +1,28 @@
 var request = require('request');
 
+var GENERAL_EVENTS_REGEX = /^.*\s?(?:(?:event[s]?|thing[s]? to do|activities|activity|whats)(?:\s(?:happening\s)?(?:around|in|near)\s(.*?)(?:\shappening)?(?:\s(today|(?:this|on|next|coming)?\s?weekend|tomorrow)?)?)?)$/i;
+
 exports.getMessageResponse = function(messageText, callback) {
-	console.log("Hello!");
-	messageText = cleanMessage(messageText);
+	response = parseMessage(messageText);
+    if (response) {
+        if (response.type == 'CITY_DATE') {
+            if (response.city == 'me') {
+                askLocation(callback, response.date, null);
+                return;
+            } 
+            handleCityDate(callback, response.city, response.date);
+            return;
+        } 
+        // else if (response.type == 'CATEGORY_CITY_DATE') {
+        //     if (response.city == 'me') {
+        //         askLocation(callback, response.date, response.category);
+        //         return;
+        //     } 
+        //     handleCategoryCityDate(callback, response.city, response.date, response.category);
+        //     return;
+        // }
+    } 
+
 	switch (messageText) {
         case "hello":
         case "hey":
@@ -10,60 +30,37 @@ exports.getMessageResponse = function(messageText, callback) {
         case "ssup":
             sendText("Hello there!", callback);
             break;
-		case "events":
-		case "events around me":
-		case "events near me":
-		case "show me events around me":
-		case "show me events near me":
-		case "things to do":
-		case "things to do around me":
-		case "event suggestions":
-		case "whats happening around me":
-            askLocation(callback);
-			break;
-        case "mumbai":
-        case "events in mumbai":
-        case "events around mumbai":
-            sendText("Sure! Let me fetch some events from Mumbai...", callback);
-            sendNearbyEvents("mumbai", callback);
-            break;
-        case "bangalore":
-        case "events in bangalore":
-        case "events around bangalore":
-            sendText("Awesome! Let me fetch some events from Bengaluru...", callback);
-            sendNearbyEvents("bangalore", callback);
-            break;
-        case "chennai":
-        case "events in chennai":
-        case "events around chennai":
-            sendText("Fabulous! Let me fetch some events from Chennai...", callback);
-            sendNearbyEvents("chennai", callback);
-            break;
-        case "delhi":
-        case "new delhi":
-        case "events in delhi":
-        case "events around delhi":
-        case "events in new delhi":
-        case "events around new delhi":
-            sendText("Yes boss! Let me fetch some events from the capital...", callback);
-            sendNearbyEvents("new+delhi", callback);
-            break;
         default:
-			sendText("Sorry I didn't understand you. Why don't you try 'events around me'.", callback);
-	}
-}
-
-function cleanMessage(messageText) {
-	messageText = messageText.toLowerCase();
-	messageText = messageText.replace(/[^\w\s]|_/g, "").replace(/\s+/g, " ");
-    if (messageText.indexOf("event") != -1) {
-        messageText = messageText.substring(messageText.indexOf("event"));
-        messageText = messageText.replace(/ happening/i, '');
+            sendText("Sorry I didn't understand you. Why don't you try 'events around me this weekend'.", callback);
     }
-	return messageText;
 }
 
-function askLocation(callback) {
+function parseMessage(messageText) {
+    messageText = messageText.toLowerCase();
+    messageText = messageText.replace(/[^\w\s]|_/g, "").replace(/\s+/g, " ");
+    var matched = messageText.match(GENERAL_EVENTS_REGEX);
+    if (matched) {
+        return {
+            type: 'CITY_DATE',
+            city: matched[1],
+            date: matched[2]
+        }
+    }
+
+    // matched = messageText.match(CATEGORY_EVENTS_REGEX);
+    // if (matched) {
+    //     return {
+    //         type: 'CATEGORY_CITY_DATE',
+    //         category: matched[1],
+    //         city: matched[2],
+    //         date: matched[3]
+    //     }
+    // }
+
+    return {}
+}
+
+function askLocation(callback, date_str, category_str) {
     callback({
         type: "TEXT_OPTIONS",
         payload: {
@@ -71,23 +68,78 @@ function askLocation(callback) {
             options: [
             {
                 title: "Mumbai",
-                id: "CITY_LOCATION_MUMBAI"
+                payload: {city: 'mumbai', date: date_str, category: category_str} 
             },
             {
                 title: "New Delhi",
-                id: "CITY_LOCATION_NEW_DELHI"
+                payload: {city: 'new delhi', date: date_str, category: category_str} 
             },
 
             {
                 title: "Chennai",
-                id: "CITY_LOCATION_CHENNAI"
+                payload: {city: 'chennai', date: date_str, category: category_str} 
             },
             {
                 title: "Bangalore",
-                id: "CITY_LOCATION_BANGALORE"
+                payload: {city: 'chennai', date: date_str, category: category_str} 
             }]
         }
     });
+}
+
+function handleCityDate(callback, city, date) {
+    if (date && date.indexOf("weekend") != -1) {
+        date = "this+weekend";
+    }
+
+    switch(city) {
+        case "mumbai":
+            sendText("Sure! Let me fetch some events from Mumbai...", callback);
+            sendNearbyEvents("mumbai", date, callback);
+            break;
+        case "bangalore":
+            sendText("Awesome! Let me fetch some events from Bengaluru...", callback);
+            sendNearbyEvents("bangalore", date, callback);
+            break;
+        case "chennai":
+            sendText("Fabulous! Let me fetch some events from Chennai...", callback);
+            sendNearbyEvents("chennai", date, callback);
+            break;
+        case "delhi":
+        case "new delhi":
+            sendText("Yes boss! Let me fetch some events from the capital...", callback);
+            sendNearbyEvents("new+delhi", date, callback);
+            break;
+    }
+}
+
+function sendNearbyEvents(city, date, callback) {
+    if (['today', 'tomorrow', 'this+weekend'].indexOf(date) == -1) {
+        date = getDate()
+    }
+    console.log("Getting events for city: " + city + " and date: " + date);
+	request('https://api.eventshigh.com/api/date/'+city+'/'+date, function (error, response, body) {
+	  if (!error && response.statusCode == 200) {
+	  	res = JSON.parse(body);
+		if (!res) {
+			console.log("Got empty response from EH API");
+			sendText("Something went wrong, sorry!", callback);
+		}
+	  	console.log("Upcoming events: " + res["upcoming_events"].length);
+        var valid_events = [];
+        for (var i=0; i<res['upcoming_events'].length; i++){
+            var e = res['upcoming_events'][i];
+            if (e && e.title && e.source_url) {
+                valid_events.push(e);
+            }
+        }
+		valid_events.splice(10);
+	  	callback({
+	  		type: "EVENTS_LIST",
+	  		payload: valid_events
+	  	});
+	  }
+	});
 }
 
 function getDate() {
@@ -105,31 +157,6 @@ function getDate() {
     } 
 
     return yyyy+'-'+mm+'-'+dd;
-}
-
-function sendNearbyEvents(city, callback) {
-	request('https://api.eventshigh.com/api/date/'+city+'/'+getDate(), function (error, response, body) {
-	  if (!error && response.statusCode == 200) {
-	  	res = JSON.parse(body);
-		if (!res) {
-			console.log("Got empty response from EH API");
-			return textMessage("Something went wrong, sorry!");
-		}
-	  	console.log("Upcoming events: " + res["upcoming_events"].length);
-        var valid_events = [];
-        for (var i=0; i<res['upcoming_events'].length; i++){
-            var e = res['upcoming_events'][i];
-            if (e && e.title && e.source_url) {
-                valid_events.push(e);
-            }
-        }
-		valid_events.splice(10);
-	  	callback({
-	  		type: "EVENTS_LIST",
-	  		payload: valid_events
-	  	});
-	  }
-	});
 }
 
 function sendText(text, callback) {

@@ -320,16 +320,10 @@ function receivedMessage(event) {
   }
 }
 
-function handleQuickReply(senderID, quickReplyPayload) {
-    console.log("Quick reply: ", quickReplyPayload);
-    var city = "";
-    switch (quickReplyPayload) {
-        case "CITY_LOCATION_MUMBAI": city="mumbai"; break;
-        case "CITY_LOCATION_BANGALORE": city="bangalore"; break;
-        case "CITY_LOCATION_NEW_DELHI": city="new delhi"; break;
-        case "CITY_LOCATION_CHENNAI": city="chennai"; break;
-    }
-    handleReceivedMessage(senderID, "events around " + city);
+function handleQuickReply(senderID, payload) {
+    console.log("Quick reply: ", payload);
+    handleReceivedMessage(senderID, "events around " + payload.city + " " + payload.date);
+    // todo: handle category
 }
 
 function handleReceivedMessage(senderID, messageText) {
@@ -347,8 +341,8 @@ function handleReceivedMessage(senderID, messageText) {
         sendEventsListMessage(senderID, response.payload);
         break;
       case 'TEXT_OPTIONS':
-	    sendTextWithOptions(senderID, response.payload.text, response.payload.options);
-	    break;
+  	    sendTextWithOptions(senderID, response.payload.text, response.payload.options);
+  	    break;
       default:
         sendTextMessage(senderID, "Sorry I don't know what's going on!"); 
         break;   
@@ -400,7 +394,7 @@ function sendTextWithOptions(recipientId, text, options) {
   for (var i=0; i<options.length; i++) {
     opts.push({"content_type":"text",
 	       "title":options[i].title,
-	       "payload":options[i].id});
+	       "payload":options[i].payload});
   }
   var messageData = {
     recipient: {
