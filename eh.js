@@ -90,24 +90,27 @@ function askLocation(callback, date_str, category_str) {
 function handleCityDate(callback, city, date) {
     if (date && date.indexOf("weekend") != -1) {
         date = "this+weekend";
+    } 
+    if (!date) {
+        date = "today";
     }
 
     switch(city) {
         case "mumbai":
-            sendText("Sure! Let me fetch some events from Mumbai...", callback);
+            sendText("Sure! Let me fetch some events from Mumbai for " + date + "...", callback);
             sendNearbyEvents("mumbai", date, callback);
             break;
         case "bangalore":
-            sendText("Awesome! Let me fetch some events from Bengaluru...", callback);
+            sendText("Awesome! Let me fetch some events from Bengaluru for " + date + "...", callback);
             sendNearbyEvents("bangalore", date, callback);
             break;
         case "chennai":
-            sendText("Fabulous! Let me fetch some events from Chennai...", callback);
+            sendText("Fabulous! Let me fetch some events from Chennai for " + date + "...", callback);
             sendNearbyEvents("chennai", date, callback);
             break;
         case "delhi":
         case "new delhi":
-            sendText("Yes boss! Let me fetch some events from the capital...", callback);
+            sendText("Yes boss! Let me fetch some events from the capital for " + date  + "...", callback);
             sendNearbyEvents("new+delhi", date, callback);
             break;
     }
