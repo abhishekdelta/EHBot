@@ -1,6 +1,6 @@
 var request = require('request');
 
-var GENERAL_EVENTS_REGEX = /^.*\s?(?:(?:event[s]?|thing[s]? to do|activities|activity|whats)(?:\s(?:happening\s)?(?:around|in|near)\s(.*?)(?:\shappening)?(?:\s(today|(?:this|on|next|coming)?\s?weekend|tomorrow)?)?)?)$/i;
+var GENERAL_EVENTS_REGEX = /^.*\s?(?:(?:event[s]?|thing[s]? to do|activities|activity|whats)(?:\s(?:happening\s)?(?:around|in|near)\s(.*?)(?:\s(?:happening|for))?(?:\s(today|(?:this|on|next|coming)?\s?weekend|tomorrow)?)?)?)$/i;
 
 exports.getMessageResponse = function(messageText, callback) {
 	response = parseMessage(messageText);
@@ -81,7 +81,7 @@ function askLocation(callback, date_str, category_str) {
             },
             {
                 title: "Bangalore",
-                payload: {city: 'chennai', date: date_str, category: category_str} 
+                payload: {city: 'bangalore', date: date_str, category: category_str} 
             }]
         }
     });
