@@ -132,7 +132,8 @@ function sendNearbyEvents(city, date, callback) {
         var valid_events = [];
         for (var i=0; i<res['upcoming_events'].length; i++){
             var e = res['upcoming_events'][i];
-            if (e && e.title && e.source_url) {
+            if (e && e.title && e.id) {
+                e.eh_url = "https://www.eventshigh.com/detail/" + city + "/" + e.id;
                 valid_events.push(e);
             }
         }

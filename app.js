@@ -362,7 +362,7 @@ function sendEventsListMessage(recipientId, events_list) {
     events.push({
       title: e.title,
       subtitle: e.description,
-      item_url: e.source_url,    
+      item_url: e.eh_url,    
       image_url: e.img_url,
       buttons: [{
         type: "web_url",
