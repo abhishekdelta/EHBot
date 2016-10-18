@@ -1,12 +1,12 @@
 var request = require('request');
 
-var GENERAL_EVENTS_REGEX = /^.*\s?(?:(?:event[s]?|thing[s]? to do|activities|activity|whats)(?:\s(?:happening\s)?(?:around|in|near)\s(.*?)(?:\shappening)?(?:\s(today|(?:this|on|next|coming)?\s?weekend|tomorrow)?)?)?)$/i;
+var GENERAL_EVENTS_REGEX = /^.*\s?(?:(?:event[s]?|thing[s]? to do|activities|activity|whats)(?:(?:\s(?:happening\s)?(?:around|in|near)\s(.*?))?(?:\shappening)?(?:\s(today|(?:this|on|next|coming)?\s?weekend|tomorrow)?)?)?)$/i;
 
 exports.getMessageResponse = function(messageText, callback) {
 	response = parseMessage(messageText);
     if (response) {
         if (response.type == 'CITY_DATE') {
-            if (response.city == 'me') {
+            if (!response.city || response.city == 'me') {
                 askLocation(callback, response.date, null);
                 return;
             } 
