@@ -246,14 +246,14 @@ function receivedMessage(event) {
     var quickReplyPayload = quickReply.payload;
     console.log("Quick reply for message %s with payload %s",
       messageId, quickReplyPayload);
-
-    sendTextMessage(senderID, "Quick reply tapped");
+    handleQuickReply(senderID, quickReplyPayload);
+    // sendTextMessage(senderID, "Quick reply tapped");
     return;
   }
 
   if (messageText) {
     handleReceivedMessage(senderID, messageText);
-    /*
+/*    
     // If we receive a text message, check to see if it matches any special
     // keywords and send back the corresponding example. Otherwise, just echo
     // the text we received.
@@ -312,7 +312,7 @@ function receivedMessage(event) {
 
       default:
         sendTextMessage(senderID, messageText);
-    } */
+    }  */
   } else if (messageAttachments) {
     sendTextMessage(senderID, "Message with attachment received");
     console.log(messageAttachments[0].payload.coordinates.lat); //gives you lat
@@ -320,7 +320,20 @@ function receivedMessage(event) {
   }
 }
 
+function handleQuickReply(senderID, quickReplyPayload) {
+    console.log("Quick reply: ", quickReplyPayload);
+    var city = "";
+    switch (quickReplyPayload) {
+        case "CITY_LOCATION_MUMBAI": city="mumbai"; break;
+        case "CITY_LOCATION_BANGALORE": city="bangalore"; break;
+        case "CITY_LOCATION_NEW_DELHI": city="new delhi"; break;
+        case "CITY_LOCATION_CHENNAI": city="chennai"; break;
+    }
+    handleReceivedMessage(senderID, "events around " + city);
+}
+
 function handleReceivedMessage(senderID, messageText) {
+  console.log("Handle message: ", messageText);
   eh.getMessageResponse(messageText, function(response) {
     if (!response) {
       return sendTextMessage(senderID, messageText + "!"); 
@@ -333,6 +346,9 @@ function handleReceivedMessage(senderID, messageText) {
       case 'EVENTS_LIST':
         sendEventsListMessage(senderID, response.payload);
         break;
+      case 'TEXT_OPTIONS':
+	    sendTextWithOptions(senderID, response.payload.text, response.payload.options);
+	    break;
       default:
         sendTextMessage(senderID, "Sorry I don't know what's going on!"); 
         break;   
@@ -342,7 +358,7 @@ function handleReceivedMessage(senderID, messageText) {
 
 function sendEventsListMessage(recipientId, events_list) {
   var events = [];
-  for (var i=0; events_list.length; i++) {
+  for (var i=0; i< events_list.length; i++) {
     var e = events_list[i];
     events.push({
       title: e.title,
@@ -378,6 +394,28 @@ function sendEventsListMessage(recipientId, events_list) {
 
   callSendAPI(messageData);
 }
+
+function sendTextWithOptions(recipientId, text, options) {
+  var opts = [];
+  for (var i=0; i<options.length; i++) {
+    opts.push({"content_type":"text",
+	       "title":options[i].title,
+	       "payload":options[i].id});
+  }
+  var messageData = {
+    recipient: {
+      id: recipientId
+    },
+    message: {
+      text: text,
+      quick_replies: opts
+    }
+  };
+
+  callSendAPI(messageData);
+}
+
+
 
 /*
  * Delivery Confirmation Event
