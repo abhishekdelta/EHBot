@@ -323,7 +323,11 @@ function receivedMessage(event) {
 function handleQuickReply(senderID, payload) {
     payload = JSON.parse(payload);
     console.log("Quick reply: ", payload);
-    handleReceivedMessage(senderID, "events around " + payload.city + " " + payload.date);
+    var message = "events around " + payload.city;
+    if (payload.date && payload.date != 'undefined') {
+        message += " " + payload.date;
+    }
+    handleReceivedMessage(senderID, message);
     // todo: handle category
 }
 
@@ -333,7 +337,7 @@ function handleReceivedMessage(senderID, messageText) {
     if (!response) {
       return sendTextMessage(senderID, messageText + "!"); 
     }
-    console.log("EH Response: ", response);
+    //console.log("EH Response: ", response);
     switch (response.type) {
       case 'TEXT': 
         sendTextMessage(senderID, response.payload); 
