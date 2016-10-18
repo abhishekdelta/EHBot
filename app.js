@@ -366,7 +366,7 @@ function sendEventsListMessage(recipientId, events_list) {
       image_url: e.img_url,
       buttons: [{
         type: "web_url",
-        url: e.source_url,
+        url: e.eh_url,
         title: "More Info"
       }, {
         type: "postback",
