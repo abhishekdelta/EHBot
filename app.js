@@ -321,6 +321,7 @@ function receivedMessage(event) {
 }
 
 function handleQuickReply(senderID, payload) {
+    payload = JSON.parse(payload);
     console.log("Quick reply: ", payload);
     handleReceivedMessage(senderID, "events around " + payload.city + " " + payload.date);
     // todo: handle category
@@ -394,7 +395,7 @@ function sendTextWithOptions(recipientId, text, options) {
   for (var i=0; i<options.length; i++) {
     opts.push({"content_type":"text",
 	       "title":options[i].title,
-	       "payload":options[i].payload});
+	       "payload":JSON.stringify(options[i].payload)});
   }
   var messageData = {
     recipient: {
