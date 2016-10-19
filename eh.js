@@ -16,9 +16,9 @@ exports.getMessageResponse = function(senderID, messageText, callback) {
                 askLocation(callback, response.date, response.category);
                 return;
             }
-        } 
+        }
         global.SENDER_CITY_CACHE[senderID] = response.city;
-        handleCityDateCategory(callback, response.city, response.date, response.category);
+        handleCityDateCategory(senderID, callback, response.city, response.date, response.category);
         return;
     } 
 
@@ -88,7 +88,7 @@ function askLocation(callback, date_str, category_str) {
     });
 }
 
-function handleCityDateCategory(callback, city, date, category) {
+function handleCityDateCategory(senderID, callback, city, date, category) {
     if (date && date.indexOf("weekend") != -1) {
         date = "this+weekend";
     } 
@@ -120,6 +120,9 @@ function handleCityDateCategory(callback, city, date, category) {
             sendText("Yes boss! Let me fetch some " + category + "events  from the capital for " + date  + "...", callback);
             sendNearbyEvents("new+delhi", date, category, callback);
             break;
+        default:
+            sendText("I think I didn't get your city, or may be we're not in your city yet...", callback);
+            global.SENDER_CITY_CACHE[senderID] = null;
     }
 }
 
