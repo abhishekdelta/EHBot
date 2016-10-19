@@ -6,9 +6,14 @@ exports.getMessageResponse = function(senderID, messageText, callback) {
 	response = parseMessage(messageText);
     if (response) {
         if (response.type == 'CITY_DATE') {
-            if ((!response.city || response.city == 'me') && !global.SENDER_CITY_CACHE[senderID]) {
-                askLocation(callback, response.date, null);
-                return;
+            if (!response.city || response.city == 'me') {
+                console.log(global.SENDER_CITY_CACHE[senderID]);
+                if (global.SENDER_CITY_CACHE[senderID]) {
+                    response.city = global.SENDER_CITY_CACHE[senderID];
+                } else {
+                    askLocation(callback, response.date, null);
+                    return;
+                }
             } 
             global.SENDER_CITY_CACHE[senderID] = response.city;
             handleCityDate(callback, response.city, response.date);
