@@ -1,32 +1,25 @@
 var request = require('request');
 
-var GENERAL_EVENTS_REGEX = /^(.*)\s?(?:(?:event[s]?|thing[s]? to do|activities|activity|whats)(?:(?:\s(?:happening\s)?(?:around|in|near)\s(.*?))?(?:\s(?:happening|for))?(?:\s(today|(?:this|on|next|coming)?\s?weekend|tomorrow)?)?)?)$/i;
+var CATEGORY_CITY_DATE_REGEX = /^(?:(?:.*?\sme\s(.*?)\s)|(.*?)\s)?(?:event[s]?\s)?(?:(?:(?:happening\s)?(?:around|in|near)\s(.*?))?(?:\s(?:happening|for))?(?:\s(today|(?:this|on|next|coming)?\s?weekend|tomorrow)?)?)?$/i;
+
+var CITY_DATE_REGEX = /^.*\s?(?:(?:event[s]?|thing[s]? to do|activities|activity|whats)(?:(?:\s(?:happening\s)?(?:around|in|near)\s(.*?))?(?:\s(?:happening|for))?(?:\s(today|(?:this|on|next|coming)?\s?weekend|tomorrow)?)?)?)$/i;
 
 exports.getMessageResponse = function(senderID, messageText, callback) {
 	response = parseMessage(messageText);
-    if (response) {
-        if (response.type == 'CITY_DATE') {
-            if (!response.city || response.city == 'me') {
-                console.log(global.SENDER_CITY_CACHE[senderID]);
-                if (global.SENDER_CITY_CACHE[senderID]) {
-                    response.city = global.SENDER_CITY_CACHE[senderID];
-                } else {
-                    askLocation(callback, response.date, null);
-                    return;
-                }
-            } 
-            global.SENDER_CITY_CACHE[senderID] = response.city;
-            handleCityDate(callback, response.city, response.date);
-            return;
+    console.log("Parsed::", response);
+    if (response) {   
+        if (!response.city || response.city == 'me') {
+            console.log(global.SENDER_CITY_CACHE[senderID]);
+            if (global.SENDER_CITY_CACHE[senderID]) {
+                response.city = global.SENDER_CITY_CACHE[senderID];
+            } else {
+                askLocation(callback, response.date, response.category);
+                return;
+            }
         } 
-        // else if (response.type == 'CATEGORY_CITY_DATE') {
-        //     if (response.city == 'me') {
-        //         askLocation(callback, response.date, response.category);
-        //         return;
-        //     } 
-        //     handleCategoryCityDate(callback, response.city, response.date, response.category);
-        //     return;
-        // }
+        global.SENDER_CITY_CACHE[senderID] = response.city;
+        handleCityDateCategory(callback, response.city, response.date, response.category);
+        return;
     } 
 
 	switch (messageText) {
@@ -44,25 +37,27 @@ exports.getMessageResponse = function(senderID, messageText, callback) {
 function parseMessage(messageText) {
     messageText = messageText.toLowerCase();
     messageText = messageText.replace(/[^\w\s]|_/g, "").replace(/\s+/g, " ");
-    var matched = messageText.match(GENERAL_EVENTS_REGEX);
+    var matched = messageText.match(CATEGORY_CITY_DATE_REGEX);
+    if (matched) {
+        var category = matched[1] || matched[2];
+        if (category.indexOf("event") != -1 || category.indexOf("activit") != -1 || category.indexOf("things to do") != -1) {
+            category = null;
+        }
+        return {
+            category: category,
+            city: matched[3],
+            date: matched[4]
+        }
+    }
+
+    matched = messageText.match(CITY_DATE_REGEX);
     if (matched) {
         return {
-            type: 'CITY_DATE',
+            category: null,
             city: matched[1],
             date: matched[2]
         }
     }
-
-    // matched = messageText.match(CATEGORY_EVENTS_REGEX);
-    // if (matched) {
-    //     return {
-    //         type: 'CATEGORY_CITY_DATE',
-    //         category: matched[1],
-    //         city: matched[2],
-    //         date: matched[3]
-    //     }
-    // }
-
     return {}
 }
 
@@ -93,7 +88,7 @@ function askLocation(callback, date_str, category_str) {
     });
 }
 
-function handleCityDate(callback, city, date) {
+function handleCityDateCategory(callback, city, date, category) {
     if (date && date.indexOf("weekend") != -1) {
         date = "this+weekend";
     } 
@@ -101,33 +96,44 @@ function handleCityDate(callback, city, date) {
         date = "today";
     }
 
+    if (!category) {
+        category = "";
+    } else {
+        category += " ";
+    }
+
     switch(city) {
         case "mumbai":
-            sendText("Sure! Let me fetch some events from Mumbai for " + date + "...", callback);
-            sendNearbyEvents("mumbai", date, callback);
+            sendText("Sure! Let me fetch some " + category + "events from Mumbai for " + date + "...", callback);
+            sendNearbyEvents("mumbai", date, category, callback);
             break;
         case "bangalore":
-            sendText("Awesome! Let me fetch some events from Bengaluru for " + date + "...", callback);
-            sendNearbyEvents("bangalore", date, callback);
+            sendText("Awesome! Let me fetch some " + category + "events  from Bengaluru for " + date + "...", callback);
+            sendNearbyEvents("bangalore", date, category, callback);
             break;
         case "chennai":
-            sendText("Fabulous! Let me fetch some events from Chennai for " + date + "...", callback);
-            sendNearbyEvents("chennai", date, callback);
+            sendText("Fabulous! Let me fetch some " + category + "events from Chennai for " + date + "...", callback);
+            sendNearbyEvents("chennai", date, category, callback);
             break;
         case "delhi":
         case "new delhi":
-            sendText("Yes boss! Let me fetch some events from the capital for " + date  + "...", callback);
-            sendNearbyEvents("new+delhi", date, callback);
+            sendText("Yes boss! Let me fetch some " + category + "events  from the capital for " + date  + "...", callback);
+            sendNearbyEvents("new+delhi", date, category, callback);
             break;
     }
 }
 
-function sendNearbyEvents(city, date, callback) {
+function sendNearbyEvents(city, date, category, callback) {
     if (['today', 'tomorrow', 'this+weekend'].indexOf(date) == -1) {
         date = getDate()
     }
-    console.log("Getting events for city: " + city + " and date: " + date);
-	request('https://api.eventshigh.com/api/date/'+city+'/'+date, function (error, response, body) {
+    console.log("Getting events for city: " + city + " and date: " + date + " and category:" + category);
+    if (category) {
+        final_url = 'https://api.eventshigh.com/api/events_for_interest_by_date/'+city+'/'+category+'/'+date;
+    } else {
+        final_url = 'https://api.eventshigh.com/api/date/'+city+'/'+date;   
+    }
+	request(final_url, function (error, response, body) {
 	  if (!error && response.statusCode == 200) {
 	  	res = JSON.parse(body);
 		if (!res) {

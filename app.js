@@ -329,6 +329,9 @@ function handleQuickReply(senderID, payload) {
     if (payload.date && payload.date != 'undefined') {
         message += " " + payload.date;
     }
+    if (payload.category && payload.category != 'undefined') {
+        message = payload.category + message;
+    }
     handleReceivedMessage(senderID, message);
     // todo: handle category
 }
