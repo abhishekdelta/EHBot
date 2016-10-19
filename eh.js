@@ -1,9 +1,10 @@
 var request = require('request');
 
-var GENERAL_EVENTS_REGEX = /^(.*)\s?(?:(?:event[s]?|thing[s]? to do|activities|activity|whats)(?:(?:\s(?:happening\s)?(?:around|in|near)\s(.*?))?(?:\s(?:happening|for))?(?:\s(today|(?:this|on|next|coming)?\s?weekend|tomorrow)?)?)?)$/i;
+var GENERAL_EVENTS_REGEX = /^(?:.*)\s?(?:(?:event[s]?|thing[s]? to do|activities|activity|whats)(?:(?:\s(?:happening\s)?(?:around|in|near)\s(.*?))?(?:\s(?:happening|for))?(?:\s(today|(?:this|on|next|coming)?\s?weekend|tomorrow)?)?)?)$/i;
 
 exports.getMessageResponse = function(senderID, messageText, callback) {
 	response = parseMessage(messageText);
+    console.log("Parsed::", response);
     if (response) {
         if (response.type == 'CITY_DATE') {
             if (!response.city || response.city == 'me') {
@@ -16,7 +17,7 @@ exports.getMessageResponse = function(senderID, messageText, callback) {
                 }
             } 
             global.SENDER_CITY_CACHE[senderID] = response.city;
-            handleCityDate(callback, response.city, response.date);
+            handleCityDate(senderID, callback, response.city, response.date);
             return;
         } 
         // else if (response.type == 'CATEGORY_CITY_DATE') {
@@ -93,7 +94,7 @@ function askLocation(callback, date_str, category_str) {
     });
 }
 
-function handleCityDate(callback, city, date) {
+function handleCityDate(senderID, callback, city, date) {
     if (date && date.indexOf("weekend") != -1) {
         date = "this+weekend";
     } 
@@ -119,6 +120,9 @@ function handleCityDate(callback, city, date) {
             sendText("Yes boss! Let me fetch some events from the capital for " + date  + "...", callback);
             sendNearbyEvents("new+delhi", date, callback);
             break;
+        default:
+            sendText("I think I didn't get your city, or may be we're not in your city yet...", callback);
+            global.SENDER_CITY_CACHE[senderID] = null;
     }
 }
 
