@@ -26,6 +26,8 @@ app.use(express.static('public'));
 
 var eh = require('./eh.js');
 
+global.SENDER_CITY_CACHE = {}
+
 /*
  * Be sure to setup your config values before running this code. You can 
  * set them using environment variables or modifying the config file in /config.
@@ -333,7 +335,7 @@ function handleQuickReply(senderID, payload) {
 
 function handleReceivedMessage(senderID, messageText) {
   console.log("Handle message: ", messageText);
-  eh.getMessageResponse(messageText, function(response) {
+  eh.getMessageResponse(senderID, messageText, function(response) {
     if (!response) {
       return sendTextMessage(senderID, messageText + "!"); 
     }

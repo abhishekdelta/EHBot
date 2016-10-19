@@ -1,15 +1,16 @@
 var request = require('request');
 
-var GENERAL_EVENTS_REGEX = /^.*\s?(?:(?:event[s]?|thing[s]? to do|activities|activity|whats)(?:(?:\s(?:happening\s)?(?:around|in|near)\s(.*?))?(?:\s(?:happening|for))?(?:\s(today|(?:this|on|next|coming)?\s?weekend|tomorrow)?)?)?)$/i;
+var GENERAL_EVENTS_REGEX = /^(.*)\s?(?:(?:event[s]?|thing[s]? to do|activities|activity|whats)(?:(?:\s(?:happening\s)?(?:around|in|near)\s(.*?))?(?:\s(?:happening|for))?(?:\s(today|(?:this|on|next|coming)?\s?weekend|tomorrow)?)?)?)$/i;
 
-exports.getMessageResponse = function(messageText, callback) {
+exports.getMessageResponse = function(senderID, messageText, callback) {
 	response = parseMessage(messageText);
     if (response) {
         if (response.type == 'CITY_DATE') {
-            if (!response.city || response.city == 'me') {
+            if ((!response.city || response.city == 'me') && !global.SENDER_CITY_CACHE[senderID]) {
                 askLocation(callback, response.date, null);
                 return;
             } 
+            global.SENDER_CITY_CACHE[senderID] = response.city;
             handleCityDate(callback, response.city, response.date);
             return;
         } 
